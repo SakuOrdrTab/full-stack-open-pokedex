@@ -8,6 +8,16 @@ primary_region = 'fra'
 
 [build]
 
+[deploy]
+  strategy = 'canary'
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30d"
+  method = "GET"
+  timeout = "10s"
+  path = "/health"
+
 [env]
   PORT = '3000'
 
