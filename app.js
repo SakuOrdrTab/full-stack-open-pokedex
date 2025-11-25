@@ -11,17 +11,17 @@ app.get('/version', (req, res) => {
   res.send('1') // change this string to ensure a new version deployed
 })
 
-// health check for CI/CD pipe
-app.get('/health', (req, res) => {
-  res.send('ok')
-})
-
-// // automatic health check error
+// // health check for CI/CD pipe
 // app.get('/health', (req, res) => {
-//   // eslint-disable-next-line no-constant-condition
-//   if (true) throw('error...  ')
 //   res.send('ok')
 // })
+
+// automatic health check error
+app.get('/health', (req, res) => {
+  // eslint-disable-next-line no-constant-condition
+  if (true) throw('error...  ')
+  res.send('ok')
+})
 
 app.listen(PORT, () => {
   console.log(`server started on port ${PORT}`)
