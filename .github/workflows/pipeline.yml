@@ -1,8 +1,9 @@
 name: Deployment pipeline
 
 env:
-  COMMIT_MESSAGE: ${{ toJson(github.event.commits) }}
-  # SKIP_IN_COMMIT: ${{ contains( COMMIT_MESSAGE ,'#SKIP')}}
+  COMMIT_MESSAGES: ${{ join(github.event.commits.*.message) }}
+  SKIP_IN_COMMIT: ${{ contains(join(github.event.commits.*.message), '#skip') || contains(join(github.event.commits.*.message), '#SKIP') }}
+  SHOULD_DEPLOY_AND_TAG: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && !contains(env.COMMIT_MESSAGES_STRING, '#skip') && !contains(env.COMMIT_MESSAGES_STRING, '#SKIP') }}
 
 on:
   push:
@@ -20,19 +21,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: github context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
-      - name: commits
-        env:
-          COMMITS: ${{ toJson(github.event.commits) }}
-        run: echo "$COMMITS"
-      - name: commit messages
-        env:
-          COMMIT_MESSAGES: ${{ toJson(github.event.commits.*.message) }}
-        run: echo "$COMMIT_MESSAGES"
 
       - name: Install dependencies 
         run: npm install  
@@ -61,7 +49,7 @@ jobs:
         uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy app
-        if: ${{ github.event_name == 'push'}}
+        if: ${{ env.SHOULD_DEPLOY_AND_TAG }}
         run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
@@ -76,7 +64,7 @@ jobs:
           fetch-depth: 0 
 
       - name: Bump version and push tag
-        if: ${{ github.event_name == 'push'}} 
+        if: ${{ env.SHOULD_DEPLOY_AND_TAG }} 
         uses: anothrNick/github-tag-action@1.75.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
