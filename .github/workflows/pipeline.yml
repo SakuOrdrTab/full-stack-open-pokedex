@@ -1,10 +1,13 @@
 name: Deployment pipeline
 
 env:
-  COMMIT_MESSAGES: ${{ join(github.event.commits.*.message) }}
-  SKIP_IN_COMMIT: ${{ contains(join(github.event.commits.*.message), '#skip') || contains(join(github.event.commits.*.message), '#SKIP') }}
-  SHOULD_DEPLOY_AND_TAG: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && !contains(env.COMMIT_MESSAGES_STRING, '#skip') && !contains(env.COMMIT_MESSAGES_STRING, '#SKIP') }}
-
+  SHOULD_DEPLOY_AND_TAG: >-
+    ${{ 
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 
+      !contains(join(github.event.commits.*.message), '#skip') && 
+      !contains(join(github.event.commits.*.message), '#SKIP')
+    }}
+      
 on:
   push:
     branches:
