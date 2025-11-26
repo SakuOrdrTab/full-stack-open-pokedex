@@ -7,7 +7,7 @@ env:
       !contains(join(github.event.commits.*.message), '#skip') && 
       !contains(join(github.event.commits.*.message), '#SKIP')
     }}
-      
+
 on:
   push:
     branches:
@@ -52,7 +52,7 @@ jobs:
         uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy app
-        if: ${{ env.SHOULD_DEPLOY_AND_TAG }}
+        if: ${{ env.SHOULD_DEPLOY_AND_TAG == 'true' }}
         run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
@@ -67,7 +67,7 @@ jobs:
           fetch-depth: 0 
 
       - name: Bump version and push tag
-        if: ${{ env.SHOULD_DEPLOY_AND_TAG }} 
+        if: ${{ env.SHOULD_DEPLOY_AND_TAG == 'true' }}
         uses: anothrNick/github-tag-action@1.75.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
