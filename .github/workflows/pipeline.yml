@@ -7,7 +7,6 @@ env:
       !contains(join(github.event.commits.*.message), '#skip') && 
       !contains(join(github.event.commits.*.message), '#SKIP')
     }}
-  WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}  
   
 on:
   push:
@@ -56,11 +55,13 @@ jobs:
 
       - name: Send test success to Discord
         if: steps.run_unit_tests.outcome == 'success' && steps.run_e2e_tests.outcome == 'success'
-        uses: rjstone/discord-webhook-notify@v1.1.1
-        with:
-          webhookUrl: ${{ secrets.WEBHOOK_URL }}
-          severity: warning
-          details: Tests passed!
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"content\": \"Tests passed!\"}" \
+            "${WEBHOOK_URL}"
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
 
       - name: Send test failure to Discord
         if: steps.run_unit_tests.outcome == 'failure' || steps.run_e2e_tests.outcome == 'failure'
