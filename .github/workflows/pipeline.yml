@@ -7,7 +7,8 @@ env:
       !contains(join(github.event.commits.*.message), '#skip') && 
       !contains(join(github.event.commits.*.message), '#SKIP')
     }}
-
+  WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}  
+  
 on:
   push:
     branches:
@@ -35,11 +36,15 @@ jobs:
         run: npm run build
 
       - name: test
+        id: run_unit_tests
         run: npm run test
+        continue-on-error: true
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+
       - name: Run Playwright tests
+        id: run_e2e_tests
         run: npx playwright test
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
@@ -47,6 +52,23 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 3
+        continue-on-error: true
+
+      - name: Send test success to Discord
+        if: steps.run_unit_tests.outcome == 'success' && steps.run_e2e_tests.outcome == 'success'
+        uses: rjstone/discord-webhook-notify@v2
+        with:
+          webhookUrl: ${{ secrets.WEBHOOK_URL }}
+          severity: warning
+          details: Tests passed!
+
+      - name: Send test success to Discord
+        if: steps.run_unit_tests.outcome == 'failure' || steps.run_e2e_tests.outcome == 'failure'
+        uses: rjstone/discord-webhook-notify@v2
+        with:
+          webhookUrl: ${{ secrets.WEBHOOK_URL }}
+          severity: warning
+          details: Tests failed!
 
       - name: Setup flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
