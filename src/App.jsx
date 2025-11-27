@@ -42,6 +42,4 @@ const App = () => {
   )
 }
 
-this will break code
-
 export default App
