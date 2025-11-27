@@ -78,7 +78,8 @@ jobs:
             -d "{\"username\":\"Luihis' bot\",\"embeds\":[{\"title\":\"❌ Pipeline failed\",\"description\":\"${reason}Commit \`${GITHUB_SHA::7}\`\",\"color\":15158332}]}" \
             "${WEBHOOK_URL}"
         env:
-          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}}
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+
 
       - name: Setup flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
