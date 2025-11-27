@@ -7,7 +7,7 @@ env:
       !contains(join(github.event.commits.*.message), '#skip') && 
       !contains(join(github.event.commits.*.message), '#SKIP')
     }}
-
+  
 on:
   push:
     branches:
@@ -32,14 +32,28 @@ jobs:
         run: npm run eslint
 
       - name: build
+        id: build
         run: npm run build
 
+      - name: Send build failure to Discord
+        if: steps.build.outcome == 'failure'
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"username\":\"Luihis' bot\",\"embeds\":[{\"title\":\"❌ Build failed\",\"description\":\"Commit \`${GITHUB_SHA::7}\` by ${GITHUB_ACTOR}\",\"color\":15158332}]}" \
+            "${WEBHOOK_URL}"
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+
       - name: test
+        id: run_unit_tests
         run: npm run test
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+
       - name: Run Playwright tests
+        id: run_e2e_tests
         run: npx playwright test
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
@@ -52,10 +66,21 @@ jobs:
         uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy app
+        id: deploy
         if: ${{ env.SHOULD_DEPLOY_AND_TAG == 'true' }}
         run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Send deploy success to Discord
+        if: steps.deploy.outcome == 'success'
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"username\":\"Luihis' bot\",\"embeds\":[{\"title\":\"✅ Deployment succeeded\",\"description\":\"Deployed commit \`${GITHUB_SHA::7}\` to fly.io\\nTriggered by ${GITHUB_ACTOR}\",\"color\":3066993}]}" \
+            "${WEBHOOK_URL}"
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
 
   tag_release:
     needs: [simple_deployment_pipeline]
