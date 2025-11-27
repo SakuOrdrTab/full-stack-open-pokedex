@@ -56,13 +56,13 @@ jobs:
 
       - name: Send test success to Discord
         if: steps.run_unit_tests.outcome == 'success' && steps.run_e2e_tests.outcome == 'success'
-        uses: rjstone/discord-webhook-notify@v2
+        uses: rjstone/discord-webhook-notify@v1.1.1
         with:
           webhookUrl: ${{ secrets.WEBHOOK_URL }}
           severity: warning
           details: Tests passed!
 
-      - name: Send test success to Discord
+      - name: Send test failure to Discord
         if: steps.run_unit_tests.outcome == 'failure' || steps.run_e2e_tests.outcome == 'failure'
         uses: rjstone/discord-webhook-notify@v2
         with:
