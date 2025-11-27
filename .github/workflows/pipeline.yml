@@ -29,21 +29,12 @@ jobs:
         run: npm install  
 
       - name: Check style
+        id: lint
         run: npm run eslint
 
       - name: build
         id: build
         run: npm run build
-
-      - name: Send build failure to Discord
-        if: steps.build.outcome == 'failure'
-        run: |
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            -d "{\"username\":\"Luihis' bot\",\"embeds\":[{\"title\":\"❌ Build failed\",\"description\":\"Commit \`${GITHUB_SHA::7}\`\",\"color\":15158332}]}" \
-            "${WEBHOOK_URL}"
-        env:
-          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
 
       - name: test
         id: run_unit_tests
@@ -61,6 +52,33 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 3
+
+      - name: Send pipeline failure to Discord
+        if: failure()
+        run: |
+          reason=""
+          if [ "${{ steps.lint.outcome }}" = "failure" ]; then
+            reason="${reason}• Linting failed\n"
+          fi
+          if [ "${{ steps.build.outcome }}" = "failure" ]; then
+            reason="${reason}• Build failed\n"
+          fi
+          if [ "${{ steps.run_unit_tests.outcome }}" = "failure" ]; then
+            reason="${reason}• Unit tests failed\n"
+          fi
+          if [ "${{ steps.run_e2e_tests.outcome }}" = "failure" ]; then
+            reason="${reason}• E2E tests failed\n"
+          fi
+          if [ -z "$reason" ]; then
+            reason="• Unknown failure\n"
+          fi
+
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"username\":\"Luihis' bot\",\"embeds\":[{\"title\":\"❌ Pipeline failed\",\"description\":\"${reason}Commit \`${GITHUB_SHA::7}\`\",\"color\":15158332}]}" \
+            "${WEBHOOK_URL}"
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}}
 
       - name: Setup flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
