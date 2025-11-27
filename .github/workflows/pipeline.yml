@@ -32,12 +32,22 @@ jobs:
         run: npm run eslint
 
       - name: build
+        id: build
         run: npm run build
+
+      - name: Send build failure to Discord
+        if: steps.build.outcome == 'failure'
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"content\": \"Deployment to fly.io succesfull\"}" \
+            "${WEBHOOK_URL}"
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
 
       - name: test
         id: run_unit_tests
         run: npm run test
-        continue-on-error: true
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
@@ -51,17 +61,6 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 3
-        continue-on-error: true
-
-      - name: Send test success to Discord
-        if: steps.run_unit_tests.outcome == 'success' && steps.run_e2e_tests.outcome == 'success'
-        run: |
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            -d "{\"content\": \"Tests passed!\"}" \
-            "${WEBHOOK_URL}"
-        env:
-          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
 
       - name: Send test failure to Discord
         if: steps.run_unit_tests.outcome == 'failure' || steps.run_e2e_tests.outcome == 'failure'
@@ -75,10 +74,21 @@ jobs:
         uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy app
+        id: deploy
         if: ${{ env.SHOULD_DEPLOY_AND_TAG == 'true' }}
         run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Send test success to Discord
+        if: steps.deploy.outcome == 'success'
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"content\": \"Deployment to fly.io succesfull\"}" \
+            "${WEBHOOK_URL}"
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
 
   tag_release:
     needs: [simple_deployment_pipeline]
