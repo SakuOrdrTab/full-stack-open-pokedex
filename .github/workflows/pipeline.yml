@@ -40,7 +40,7 @@ jobs:
         run: |
           curl -X POST \
             -H "Content-Type: application/json" \
-            -d "{\"username\":\"Luihis' bot\",\"embeds\":[{\"title\":\"❌ Build failed\",\"description\":\"Commit \`${GITHUB_SHA::7}\` by ${GITHUB_ACTOR}\",\"color\":15158332}]}" \
+            -d "{\"username\":\"Luihis' bot\",\"embeds\":[{\"title\":\"❌ Build failed\",\"description\":\"Commit \`${GITHUB_SHA::7}\`\",\"color\":15158332}]}" \
             "${WEBHOOK_URL}"
         env:
           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
@@ -77,7 +77,7 @@ jobs:
         run: |
           curl -X POST \
             -H "Content-Type: application/json" \
-            -d "{\"username\":\"Luihis' bot\",\"embeds\":[{\"title\":\"✅ Deployment succeeded\",\"description\":\"Deployed commit \`${GITHUB_SHA::7}\` to fly.io\\nTriggered by ${GITHUB_ACTOR}\",\"color\":3066993}]}" \
+            -d "{\"username\":\"Luihis' bot\",\"embeds\":[{\"title\":\"✅ Deployment succeeded\",\"description\":\"Deployed commit \`${GITHUB_SHA::7}\` to fly.io\",\"color\":3066993}]}" \
             "${WEBHOOK_URL}"
         env:
           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
